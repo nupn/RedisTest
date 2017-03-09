@@ -8,8 +8,8 @@
 using namespace redispp;
 using namespace std;
 
-const char* TEST_PORT = "0";
-const char* TEST_HOST = "127.0.0.1";
+const char* TEST_PORT = "7000";
+const char* TEST_HOST = "13.124.3.11";
 const char* TEST_UNIX_DOMAIN_SOCKET = "/tmp/redis.sock";
 
 int main(int argc, char* argv[])
@@ -24,33 +24,17 @@ int main(int argc, char* argv[])
 #ifdef UNIX_DOMAIN_SOCKET
 	Connection conn(TEST_UNIX_DOMAIN_SOCKET, "");
 #else
-	Connection conn(TEST_HOST, TEST_PORT, "");
+	Connection conn(TEST_HOST, TEST_PORT, "dudah2");
 #endif
 
-	int length = conn.llen("list");
-	printf("Length: %d\n", length);
-	if (argc > 1) {
-		int targetLength = atoi(argv[1]);
-		const size_t chunkFactor = 256;
-		IntReply replies[chunkFactor];
-		string key = "list";
-		string value = "abcdefghijklmnopqrstuvwxyz";
-		while (value.length() < 1400) {
-			value = value + value;
-		}
-		for (int i = 0; length < targetLength; ++i, ++length) {
-			replies[i & (chunkFactor - 1)] = conn.lpush(key, value);
-		}
-		length = conn.llen("list");
-		printf("New Length: %d\n", length);
-	}
-
-	MultiBulkEnumerator result = conn.lrange("list", length - 10000, -1);
-
-	string data;
-	while (result.next(&data)) {
-		printf("Data: %s\n", data.c_str());
-	}
-
+	conn.set("hello", "world");
+	StringReply stringReply = conn.get("hello");
+	stringReply.result().is_initialized();
+	printf("%s", ((std::string)conn.get("hello")).c_str());
+	
+	//BOOST_CHECK((bool)conn.exists("hello"));
+	//BOOST_CHECK((bool)conn.del("hello"));
+	//BOOST_CHECK(!conn.exists("hello"));
+	//BOOST_CHECK(!conn.del("hello"));
 	return 0;
 }
